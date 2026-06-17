@@ -7,13 +7,13 @@ textract_client = boto3.client('textract')
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('Invoices')
 
-def lamba_handler(event, context):
-    bucket_name = event['Records'][0]['bucket']['name']
-    file_name = event['Records'][0]['object']['key']
+def lambda_handler(event, context):
+    bucket_name = event['Records'][0]['s3']['bucket']['name']
+    file_name = event['Records'][0]['s3']['object']['key']
 
     print(f"New file {file_name} is updated in {bucket_name} bucket")
     try:
-        respone = textract_client.detect_document_text(
+        response = textract_client.detect_document_text(
             Document={
                 'S3Object': {
                     'Bucket': bucket_name,
@@ -23,8 +23,8 @@ def lamba_handler(event, context):
         )
 
         detect_text = ""
-        for item in respone['Blocks']:
-            if item['BlockType'] == 'Line':
+        for item in response['Blocks']:
+            if item['BlockType'] == 'LINE':
                 detect_text += item['Text'] + " "
             
         invoice_id = str(uuid.uuid4())
@@ -37,8 +37,8 @@ def lamba_handler(event, context):
             }
         )
         return {
-            'status_code': 200,
-            'body': json.dump('Done!')
+            'statusCode': 200,
+            'body': json.dumps('Done!')
         }
     except Exception as e:
         print(f"Error: {str(e)}")
